@@ -1,0 +1,50 @@
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  # DeploymentSpec
+  replicas: 4
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    # PodTemplateSpec
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      #PodSpec
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - myapp
+              weight: 50
+      containers:
+      - image: nginx:latest
+        imagePullPolicy: IfNotPresent
+        name: nginx
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        readinessProbe:
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 5
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+        resources:
+          requests:
+            cpu: 0.2
+            memory: 128Mi
